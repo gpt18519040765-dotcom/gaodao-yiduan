@@ -2,22 +2,27 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { Shell } from "@/components/Shell";
 import { DivinationDraft, DivinationResult, enrichDivination } from "@/lib/divination";
 
 const topics = ["事业", "感情", "财运", "家庭", "健康", "学业", "其他"];
+const currentDraftKey = "gaodao-current-divination";
+
+function subscribeToStoredDraft(onStoreChange: () => void) {
+  window.addEventListener("storage", onStoreChange);
+  return () => window.removeEventListener("storage", onStoreChange);
+}
+
+function getStoredDraftSnapshot() {
+  return localStorage.getItem(currentDraftKey);
+}
 
 export default function ResultPage() {
-  const [draft, setDraft] = useState<DivinationDraft | null>(null);
   const [topic, setTopic] = useState(topics[0]);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    const raw = localStorage.getItem("gaodao-current-divination");
-    if (raw) setDraft(JSON.parse(raw) as DivinationDraft);
-  }, []);
-
+  const draftSnapshot = useSyncExternalStore(subscribeToStoredDraft, getStoredDraftSnapshot, () => null);
+  const draft = useMemo(() => (draftSnapshot ? (JSON.parse(draftSnapshot) as DivinationDraft) : null), [draftSnapshot]);
   const result: DivinationResult | null = useMemo(() => (draft ? enrichDivination(draft) : null), [draft]);
 
   function saveRecord() {
