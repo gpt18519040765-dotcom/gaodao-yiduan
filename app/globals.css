@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+:root {
+  --background: #070705;
+  --foreground: #f7efd7;
+  --gold: #d7ad57;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at top, rgba(215, 173, 87, 0.18), transparent 34rem),
+    linear-gradient(135deg, #070705 0%, #12100c 46%, #070705 100%);
+  font-family: var(--font-geist-sans), "Noto Serif SC", "Songti SC", serif;
+}
+
+button,
+a,
+select {
+  transition: all 180ms ease;
+}
+
+.ritual-card {
+  border: 1px solid rgba(215, 173, 87, 0.22);
+  background: linear-gradient(145deg, rgba(23, 20, 14, 0.88), rgba(10, 9, 7, 0.92));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.gold-text {
+  color: var(--gold);
+}
+
+.stick {
+  width: 4px;
+  height: 72px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #f3d58a, #9d672c 48%, #5b3417);
+  box-shadow: 0 0 12px rgba(215, 173, 87, 0.18);
+}
+
+.stick-horizontal {
+  width: 96px;
+  height: 5px;
+}
