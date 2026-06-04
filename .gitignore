@@ -31,3 +31,4 @@ pnpm-debug.log*
 
 # local app database
 /data/runtime/
+.vercel
