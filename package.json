@@ -1,0 +1,31 @@
+{
+  "name": "gaodao-yiduan",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "build:translations": "node scripts/build-translation-workbench.mjs",
+    "fill:translations": "node scripts/fill-translation-drafts.mjs",
+    "validate:data": "node scripts/validate-gaodao-data.mjs",
+    "validate:db": "node scripts/validate-database.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "latest",
+    "framer-motion": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest"
+  }
+}
