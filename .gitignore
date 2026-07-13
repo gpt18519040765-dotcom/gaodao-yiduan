@@ -28,3 +28,7 @@ pnpm-debug.log*
 
 # typescript
 *.tsbuildinfo
+
+# local app database
+/data/runtime/
+.vercel

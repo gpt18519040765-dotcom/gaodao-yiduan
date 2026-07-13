@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "build:translations": "node scripts/build-translation-workbench.mjs",
+    "fill:translations": "node scripts/fill-translation-drafts.mjs",
+    "validate:data": "node scripts/validate-gaodao-data.mjs",
+    "validate:db": "node scripts/validate-database.mjs"
   },
   "dependencies": {
     "@tailwindcss/postcss": "latest",

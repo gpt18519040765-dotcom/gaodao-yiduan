@@ -1,3 +1,5 @@
+import { GaodaoHexagramSource, getGaodaoSource } from "@/data/gaodao";
+
 export type Trigram = {
   number: number;
   name: string;
@@ -11,6 +13,12 @@ export type Hexagram = {
   lower: number;
   name: string;
   explanation: string;
+  source?: GaodaoHexagramSource;
+};
+
+export type TrigramVisual = Trigram & {
+  lines: boolean[];
+  imageHint: string;
 };
 
 export const trigrams: Trigram[] = [
@@ -23,6 +31,42 @@ export const trigrams: Trigram[] = [
   { number: 7, name: "艮", symbol: "☶", nature: "山", quality: "止息、边界、沉稳" },
   { number: 8, name: "坤", symbol: "☷", nature: "地", quality: "承载、包容、成全" },
 ];
+
+export const trigramLines: Record<number, boolean[]> = {
+  1: [true, true, true],
+  2: [true, true, false],
+  3: [true, false, true],
+  4: [true, false, false],
+  5: [false, true, true],
+  6: [false, true, false],
+  7: [false, false, true],
+  8: [false, false, false],
+};
+
+const trigramImageHints: Record<number, string> = {
+  1: "天行健，持续向上、开创、担当。",
+  2: "泽有悦，重沟通、兑现、交换。",
+  3: "火有明，重看见、依附、辨明。",
+  4: "雷发动，重惊醒、启动、突破。",
+  5: "风入物，重渗透、顺入、反复沟通。",
+  6: "水行险，重风险、流动、智慧。",
+  7: "山能止，重边界、沉稳、停下。",
+  8: "地承载，重包容、配合、积累。",
+};
+
+export function getTrigramLines(number: number) {
+  return trigramLines[number] ?? trigramLines[1];
+}
+
+export function getTrigramVisual(number: number): TrigramVisual {
+  const trigram = getTrigram(number) ?? trigrams[0];
+
+  return {
+    ...trigram,
+    lines: getTrigramLines(number),
+    imageHint: trigramImageHints[number] ?? trigram.quality,
+  };
+}
 
 const explanations: Record<string, string> = {
   "乾为天": "势能强盛，宜自强不息；但过刚则折，行动前需确认方向。",
@@ -49,14 +93,19 @@ const matrix = [
 export const hexagramMatrix: string[][] = matrix;
 
 export const hexagrams: Hexagram[] = matrix.flatMap((row, upperIndex) =>
-  row.map((name, lowerIndex) => ({
-    upper: upperIndex + 1,
-    lower: lowerIndex + 1,
-    name,
-    explanation:
-      explanations[name] ??
-      `「${name}」提示你观察上下两股力量的互动：先辨明处境，再选择顺势、守正或暂缓。`,
-  })),
+  row.map((name, lowerIndex) => {
+    const source = getGaodaoSource(name);
+
+    return {
+      upper: upperIndex + 1,
+      lower: lowerIndex + 1,
+      name,
+      explanation:
+        explanations[name] ??
+        `已定位《高島易断》原典来源：${source?.volume.title ?? "待校对卷册"}。下一步可依据公版 OCR/扫描逐段整理卦辞、爻辞与高岛断语。`,
+      source,
+    };
+  }),
 );
 
 export function getTrigram(number: number) {

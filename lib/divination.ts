@@ -1,11 +1,20 @@
-import { getHexagram, getTrigram } from "@/data/gua";
+import { getHexagram, getTrigram, trigramLines } from "@/data/gua";
+import { GaodaoHexagramText, GaodaoLineText, getGaodaoText } from "@/data/reading";
+import { getSpecialReadings, SpecialReading } from "@/data/special-readings";
 
 export type SplitResult = {
   left: number;
   right: number;
 };
 
+export type DivinationGender = "male" | "female" | "unknown";
+export type DivinationStepKey = "upper" | "lower" | "moving";
+export type DivinationHand = "left" | "right";
+
 export type DivinationDraft = {
+  question: string;
+  topic: string;
+  gender: DivinationGender;
   upperNumber: number;
   lowerNumber: number;
   movingLine: number;
@@ -19,7 +28,20 @@ export type DivinationResult = DivinationDraft & {
   upperName: string;
   lowerName: string;
   hexagramName: string;
+  changedUpperNumber: number;
+  changedLowerNumber: number;
+  changedHexagramName: string;
   explanation: string;
+  sourceTitle?: string;
+  sourceRange?: string;
+  sourceOcrUrl?: string;
+  sourcePdfUrl?: string;
+  sourceTraditionalName?: string;
+  kingWenNumber?: number;
+  primaryText?: GaodaoHexagramText;
+  movingLineText?: GaodaoLineText;
+  changedText?: GaodaoHexagramText;
+  specialReadings: SpecialReading[];
 };
 
 export const TOTAL_STICKS = 50;
@@ -36,15 +58,46 @@ export function remainderAsNumber(value: number, divisor: 8 | 6): number {
   return remainder === 0 ? divisor : remainder;
 }
 
-export function createDivinationDraft(): DivinationDraft {
+export function getDivinationStepRule(gender: DivinationGender = "unknown", step: DivinationStepKey) {
+  const useFemaleRule = gender === "female";
+  const hand: DivinationHand = useFemaleRule
+    ? step === "lower" ? "left" : "right"
+    : step === "lower" ? "right" : "left";
+  const divisor: 6 | 8 = step === "moving" ? 6 : 8;
+  const target = step === "upper" ? "定上卦" : step === "lower" ? "定下卦" : "定动爻";
+
+  return {
+    hand,
+    divisor,
+    target,
+    handLabel: hand === "left" ? "左手" : "右手",
+    label: `取${hand === "left" ? "左手" : "右手"}余数${target}`,
+  };
+}
+
+export function calculateDivinationNumber(split: SplitResult, gender: DivinationGender, step: DivinationStepKey) {
+  const rule = getDivinationStepRule(gender, step);
+  return remainderAsNumber(split[rule.hand], rule.divisor);
+}
+
+export function getGenderLabel(gender: DivinationGender) {
+  if (gender === "male") return "男";
+  if (gender === "female") return "女";
+  return "暂不选择";
+}
+
+export function createDivinationDraft(question = "", topic = "问占", gender: DivinationGender = "unknown"): DivinationDraft {
   const upperSplit = splitSticks();
   const lowerSplit = splitSticks();
   const movingSplit = splitSticks();
 
   return {
-    upperNumber: remainderAsNumber(upperSplit.left, 8),
-    lowerNumber: remainderAsNumber(lowerSplit.right, 8),
-    movingLine: remainderAsNumber(movingSplit.left, 6),
+    question: question.trim(),
+    topic,
+    gender,
+    upperNumber: calculateDivinationNumber(upperSplit, gender, "upper"),
+    lowerNumber: calculateDivinationNumber(lowerSplit, gender, "lower"),
+    movingLine: calculateDivinationNumber(movingSplit, gender, "moving"),
     upperSplit,
     lowerSplit,
     movingSplit,
@@ -52,16 +105,55 @@ export function createDivinationDraft(): DivinationDraft {
   };
 }
 
+function numberFromLines(lines: boolean[]) {
+  return (
+    Object.entries(trigramLines).find(([, trigramLine]) =>
+      trigramLine.every((line, index) => line === lines[index]),
+    )?.[0] ?? "1"
+  );
+}
+
+export function getChangedHexagramNumbers(upperNumber: number, lowerNumber: number, movingLine: number) {
+  const lines = [...trigramLines[lowerNumber], ...trigramLines[upperNumber]];
+  lines[movingLine - 1] = !lines[movingLine - 1];
+
+  return {
+    changedLowerNumber: Number(numberFromLines(lines.slice(0, 3))),
+    changedUpperNumber: Number(numberFromLines(lines.slice(3, 6))),
+  };
+}
+
 export function enrichDivination(draft: DivinationDraft): DivinationResult {
   const upper = getTrigram(draft.upperNumber);
   const lower = getTrigram(draft.lowerNumber);
   const hexagram = getHexagram(draft.upperNumber, draft.lowerNumber);
+  const { changedUpperNumber, changedLowerNumber } = getChangedHexagramNumbers(
+    draft.upperNumber,
+    draft.lowerNumber,
+    draft.movingLine,
+  );
+  const changedHexagram = getHexagram(changedUpperNumber, changedLowerNumber);
+  const primaryText = hexagram ? getGaodaoText(hexagram.name) : undefined;
 
   return {
     ...draft,
+    gender: draft.gender ?? "unknown",
     upperName: upper?.name ?? "未知",
     lowerName: lower?.name ?? "未知",
     hexagramName: hexagram?.name ?? "未知本卦",
+    changedUpperNumber,
+    changedLowerNumber,
+    changedHexagramName: changedHexagram?.name ?? "未知变卦",
     explanation: hexagram?.explanation ?? "请重新起卦，以获得更清晰的提示。",
+    sourceTitle: hexagram?.source?.volume.title,
+    sourceRange: hexagram?.source?.volume.range,
+    sourceOcrUrl: hexagram?.source?.volume.ocrUrl,
+    sourcePdfUrl: hexagram?.source?.volume.pdfUrl,
+    sourceTraditionalName: hexagram?.source?.traditionalName,
+    kingWenNumber: hexagram?.source?.kingWenNumber,
+    primaryText,
+    movingLineText: primaryText?.lines.find((line) => line.line === draft.movingLine),
+    changedText: changedHexagram ? getGaodaoText(changedHexagram.name) : undefined,
+    specialReadings: hexagram ? getSpecialReadings(hexagram.name) : [],
   };
 }
